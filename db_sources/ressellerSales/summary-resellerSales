@@ -1,0 +1,281 @@
+-- AdventureWorksDW2022_DW.dbo.FactResellerSales definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales (
+	ProductKey int NOT NULL,
+	OrderDateKey int NOT NULL,
+	DueDateKey int NOT NULL,
+	ShipDateKey int NOT NULL,
+	ResellerKey int NOT NULL,
+	EmployeeKey int NOT NULL,
+	PromotionKey int NOT NULL,
+	CurrencyKey int NOT NULL,
+	SalesTerritoryKey int NOT NULL,
+	SalesOrderNumber nvarchar(20) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SalesOrderLineNumber tinyint NOT NULL,
+	RevisionNumber tinyint NULL,
+	OrderQuantity smallint NULL,
+	UnitPrice money NULL,
+	ExtendedAmount money NULL,
+	UnitPriceDiscountPct float NULL,
+	DiscountAmount float NULL,
+	ProductStandardCost money NULL,
+	TotalProductCost money NULL,
+	SalesAmount money NULL,
+	TaxAmt money NULL,
+	Freight money NULL,
+	CarrierTrackingNumber nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	CustomerPONumber nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	OrderDate datetime NULL,
+	DueDate datetime NULL,
+	ShipDate datetime NULL,
+	CONSTRAINT PK_FactResellerSales_SalesOrderNumber_SalesOrderLineNumber PRIMARY KEY (SalesOrderNumber,SalesOrderLineNumber)
+);
+
+
+-- AdventureWorksDW2022_DW.dbo.FactResellerSales foreign keys
+
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimCurrency FOREIGN KEY (CurrencyKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimCurrency(CurrencyKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimDate FOREIGN KEY (OrderDateKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimDate(DateKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimDate1 FOREIGN KEY (DueDateKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimDate(DateKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimDate2 FOREIGN KEY (ShipDateKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimDate(DateKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimEmployee FOREIGN KEY (EmployeeKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimEmployee(EmployeeKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimProduct FOREIGN KEY (ProductKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimProduct(ProductKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimPromotion FOREIGN KEY (PromotionKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimPromotion(PromotionKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimReseller FOREIGN KEY (ResellerKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimReseller(ResellerKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.FactResellerSales ADD CONSTRAINT FK_FactResellerSales_DimSalesTerritory FOREIGN KEY (SalesTerritoryKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimSalesTerritory(SalesTerritoryKey);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimDate definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimDate;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimDate (
+	DateKey int NOT NULL,
+	FullDateAlternateKey date NOT NULL,
+	DayNumberOfWeek tinyint NOT NULL,
+	EnglishDayNameOfWeek nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SpanishDayNameOfWeek nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	FrenchDayNameOfWeek nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	DayNumberOfMonth tinyint NOT NULL,
+	DayNumberOfYear smallint NOT NULL,
+	WeekNumberOfYear tinyint NOT NULL,
+	EnglishMonthName nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SpanishMonthName nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	FrenchMonthName nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	MonthNumberOfYear tinyint NOT NULL,
+	CalendarQuarter tinyint NOT NULL,
+	CalendarYear smallint NOT NULL,
+	CalendarSemester tinyint NOT NULL,
+	FiscalQuarter tinyint NOT NULL,
+	FiscalYear smallint NOT NULL,
+	FiscalSemester tinyint NOT NULL,
+	CONSTRAINT PK_DimDate_DateKey PRIMARY KEY (DateKey)
+);
+ CREATE UNIQUE NONCLUSTERED INDEX AK_DimDate_FullDateAlternateKey ON AdventureWorksDW2022_DW.dbo.DimDate (  FullDateAlternateKey ASC  )  
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+-- AdventureWorksDW2022_DW.dbo.DimCurrency definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimCurrency;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimCurrency (
+	CurrencyKey int IDENTITY(1,1) NOT NULL,
+	CurrencyAlternateKey nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	CurrencyName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	CONSTRAINT PK_DimCurrency_CurrencyKey PRIMARY KEY (CurrencyKey)
+);
+ CREATE UNIQUE NONCLUSTERED INDEX AK_DimCurrency_CurrencyAlternateKey ON AdventureWorksDW2022_DW.dbo.DimCurrency (  CurrencyAlternateKey ASC  )  
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+
+-- AdventureWorksDW2022_DW.dbo.DimPromotion definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimPromotion;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimPromotion (
+	PromotionKey int IDENTITY(1,1) NOT NULL,
+	PromotionAlternateKey int NULL,
+	EnglishPromotionName nvarchar(255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SpanishPromotionName nvarchar(255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	FrenchPromotionName nvarchar(255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	DiscountPct float NULL,
+	EnglishPromotionType nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SpanishPromotionType nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	FrenchPromotionType nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EnglishPromotionCategory nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SpanishPromotionCategory nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	FrenchPromotionCategory nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	StartDate datetime NOT NULL,
+	EndDate datetime NULL,
+	MinQty int NULL,
+	MaxQty int NULL,
+	CONSTRAINT AK_DimPromotion_PromotionAlternateKey UNIQUE (PromotionAlternateKey),
+	CONSTRAINT PK_DimPromotion_PromotionKey PRIMARY KEY (PromotionKey)
+);
+
+-- AdventureWorksDW2022_DW.dbo.DimReseller definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimReseller;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimReseller (
+	ResellerKey int IDENTITY(1,1) NOT NULL,
+	GeographyKey int NULL,
+	ResellerAlternateKey nvarchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	Phone nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	BusinessType varchar(20) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ResellerName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	NumberEmployees int NULL,
+	OrderFrequency char(1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	OrderMonth tinyint NULL,
+	FirstOrderYear int NULL,
+	LastOrderYear int NULL,
+	ProductLine nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	AddressLine1 nvarchar(60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	AddressLine2 nvarchar(60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	AnnualSales money NULL,
+	BankName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	MinPaymentType tinyint NULL,
+	MinPaymentAmount money NULL,
+	AnnualRevenue money NULL,
+	YearOpened int NULL,
+	CONSTRAINT AK_DimReseller_ResellerAlternateKey UNIQUE (ResellerAlternateKey),
+	CONSTRAINT PK_DimReseller_ResellerKey PRIMARY KEY (ResellerKey)
+);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimReseller foreign keys
+
+ALTER TABLE AdventureWorksDW2022_DW.dbo.DimReseller ADD CONSTRAINT FK_DimReseller_DimGeography FOREIGN KEY (GeographyKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimGeography(GeographyKey);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimProduct definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimProduct;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimProduct (
+	ProductKey int IDENTITY(1,1) NOT NULL,
+	ProductAlternateKey nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ProductSubcategoryKey int NULL,
+	WeightUnitMeasureCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SizeUnitMeasureCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EnglishProductName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SpanishProductName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	FrenchProductName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	StandardCost money NULL,
+	FinishedGoodsFlag bit NOT NULL,
+	Color nvarchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SafetyStockLevel smallint NULL,
+	ReorderPoint smallint NULL,
+	ListPrice money NULL,
+	[Size] nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SizeRange nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	Weight float NULL,
+	DaysToManufacture int NULL,
+	ProductLine nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	DealerPrice money NULL,
+	Class nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Style] nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ModelName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	LargePhoto varbinary(MAX) NULL,
+	EnglishDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	FrenchDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ChineseDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ArabicDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	HebrewDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ThaiDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	GermanDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	JapaneseDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	TurkishDescription nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	StartDate datetime NULL,
+	EndDate datetime NULL,
+	Status nvarchar(7) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	CONSTRAINT AK_DimProduct_ProductAlternateKey_StartDate UNIQUE (ProductAlternateKey,StartDate),
+	CONSTRAINT PK_DimProduct_ProductKey PRIMARY KEY (ProductKey)
+);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimProduct foreign keys
+
+ALTER TABLE AdventureWorksDW2022_DW.dbo.DimProduct ADD CONSTRAINT FK_DimProduct_DimProductSubcategory FOREIGN KEY (ProductSubcategoryKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimProductSubcategory(ProductSubcategoryKey);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimSalesTerritory definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimSalesTerritory;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimSalesTerritory (
+	SalesTerritoryKey int IDENTITY(1,1) NOT NULL,
+	SalesTerritoryAlternateKey int NULL,
+	SalesTerritoryRegion nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SalesTerritoryCountry nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SalesTerritoryGroup nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SalesTerritoryImage varbinary(MAX) NULL,
+	CONSTRAINT AK_DimSalesTerritory_SalesTerritoryAlternateKey UNIQUE (SalesTerritoryAlternateKey),
+	CONSTRAINT PK_DimSalesTerritory_SalesTerritoryKey PRIMARY KEY (SalesTerritoryKey)
+);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimEmployee definition
+
+-- Drop table
+
+-- DROP TABLE AdventureWorksDW2022_DW.dbo.DimEmployee;
+
+CREATE TABLE AdventureWorksDW2022_DW.dbo.DimEmployee (
+	EmployeeKey int IDENTITY(1,1) NOT NULL,
+	ParentEmployeeKey int NULL,
+	EmployeeNationalIDAlternateKey nvarchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ParentEmployeeNationalIDAlternateKey nvarchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SalesTerritoryKey int NULL,
+	FirstName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	LastName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	MiddleName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	NameStyle bit NOT NULL,
+	Title nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	HireDate date NULL,
+	BirthDate date NULL,
+	LoginID nvarchar(256) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EmailAddress nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	Phone nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	MaritalStatus nchar(1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EmergencyContactName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EmergencyContactPhone nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SalariedFlag bit NULL,
+	Gender nchar(1) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	PayFrequency tinyint NULL,
+	BaseRate money NULL,
+	VacationHours smallint NULL,
+	SickLeaveHours smallint NULL,
+	CurrentFlag bit NOT NULL,
+	SalesPersonFlag bit NOT NULL,
+	DepartmentName nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	StartDate date NULL,
+	EndDate date NULL,
+	Status nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EmployeePhoto varbinary(MAX) NULL,
+	CONSTRAINT PK_DimEmployee_EmployeeKey PRIMARY KEY (EmployeeKey)
+);
+
+
+-- AdventureWorksDW2022_DW.dbo.DimEmployee foreign keys
+
+ALTER TABLE AdventureWorksDW2022_DW.dbo.DimEmployee ADD CONSTRAINT FK_DimEmployee_DimEmployee FOREIGN KEY (ParentEmployeeKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimEmployee(EmployeeKey);
+ALTER TABLE AdventureWorksDW2022_DW.dbo.DimEmployee ADD CONSTRAINT FK_DimEmployee_DimSalesTerritory FOREIGN KEY (SalesTerritoryKey) REFERENCES AdventureWorksDW2022_DW.dbo.DimSalesTerritory(SalesTerritoryKey);

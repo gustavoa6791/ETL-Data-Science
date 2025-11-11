@@ -1,0 +1,314 @@
+--==================================================
+-- Esquema: Person
+-- Tablas base para DimCustomer
+--==================================================
+CREATE SCHEMA Person;
+GO
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.BusinessEntity (
+	BusinessEntityID int IDENTITY(1,1) NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_BusinessEntity_BusinessEntityID PRIMARY KEY (BusinessEntityID)
+[cite_start]); [cite: 31]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.AddressType (
+	AddressTypeID int IDENTITY(1,1) NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_AddressType_AddressTypeID PRIMARY KEY (AddressTypeID)
+[cite_start]); [cite: 29]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.CountryRegion (
+	CountryRegionCode nvarchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_CountryRegion_CountryRegionCode PRIMARY KEY (CountryRegionCode)
+[cite_start]); [cite: 35]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.StateProvince (
+	StateProvinceID int IDENTITY(1,1) NOT NULL,
+	StateProvinceCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	CountryRegionCode nvarchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	IsOnlyStateProvinceFlag Flag DEFAULT 1 NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	TerritoryID int NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_StateProvince_StateProvinceID PRIMARY KEY (StateProvinceID)
+[cite_start]); [cite: 58]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.Address (
+	AddressID int IDENTITY(1,1) NOT NULL,
+	AddressLine1 nvarchar(60) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	AddressLine2 nvarchar(60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	City nvarchar(30) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	StateProvinceID int NOT NULL,
+	PostalCode nvarchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SpatialLocation geography NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_Address_AddressID PRIMARY KEY (AddressID)
+[cite_start]); [cite: 52]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.BusinessEntityAddress (
+	BusinessEntityID int NOT NULL,
+	AddressID int NOT NULL,
+	AddressTypeID int NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_BusinessEntityAddress_BusinessEntityID_AddressID_AddressTypeID PRIMARY KEY (BusinessEntityID,AddressID,AddressTypeID)
+[cite_start]); [cite: 55]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.Person (
+	BusinessEntityID int NOT NULL,
+	PersonType nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	NameStyle NameStyle DEFAULT 0 NOT NULL,
+	Title nvarchar(8) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	FirstName Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	MiddleName Name COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	LastName Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	Suffix nvarchar(10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	EmailPromotion int DEFAULT 0 NOT NULL,
+	AdditionalContactInfo xml NULL,
+	Demographics xml NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_Person_BusinessEntityID PRIMARY KEY (BusinessEntityID)
+[cite_start]); [cite: 38]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.PhoneNumberType (
+	PhoneNumberTypeID int IDENTITY(1,1) NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_PhoneNumberType_PhoneNumberTypeID PRIMARY KEY (PhoneNumberTypeID)
+[cite_start]); [cite: 37]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.PersonPhone (
+	BusinessEntityID int NOT NULL,
+	PhoneNumber Phone COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	PhoneNumberTypeID int NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_PersonPhone_BusinessEntityID_PhoneNumber_PhoneNumberTypeID PRIMARY KEY (BusinessEntityID,PhoneNumber,PhoneNumberTypeID)
+[cite_start]); [cite: 44]
+
+CREATE TABLE AdventureWorks2022_TRANS.Person.EmailAddress (
+	BusinessEntityID int NOT NULL,
+	EmailAddressID int IDENTITY(1,1) NOT NULL,
+	EmailAddress nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_EmailAddress_BusinessEntityID_EmailAddressID PRIMARY KEY (BusinessEntityID,EmailAddressID)
+[cite_start]); [cite: 49]
+
+--==================================================
+-- Esquema: Production
+-- Tablas base para DimProduct
+--==================================================
+CREATE SCHEMA Production;
+GO
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.ProductCategory (
+	ProductCategoryID int IDENTITY(1,1) NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_ProductCategory_ProductCategoryID PRIMARY KEY (ProductCategoryID)
+[cite_start]); [cite: 72]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.ProductSubcategory (
+	ProductSubcategoryID int IDENTITY(1,1) NOT NULL,
+	ProductCategoryID int NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_ProductSubcategory_ProductSubcategoryID PRIMARY KEY (ProductSubcategoryID)
+[cite_start]); [cite: 89]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.UnitMeasure (
+	UnitMeasureCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_UnitMeasure_UnitMeasureCode PRIMARY KEY (UnitMeasureCode)
+[cite_start]); [cite: 85]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.ProductModel (
+	ProductModelID int IDENTITY(1,1) NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	CatalogDescription xml NULL,
+	Instructions xml NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_ProductModel_ProductModelID PRIMARY KEY (ProductModelID)
+[cite_start]); [cite: 76]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.ProductDescription (
+	ProductDescriptionID int IDENTITY(1,1) NOT NULL,
+	Description nvarchar(400) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_ProductDescription_ProductDescriptionID PRIMARY KEY (ProductDescriptionID)
+[cite_start]); [cite: 74]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.Culture (
+	CultureID nchar(6) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_Culture_CultureID PRIMARY KEY (CultureID)
+[cite_start]); [cite: 66]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.ProductModelProductDescriptionCulture (
+	ProductModelID int NOT NULL,
+	ProductDescriptionID int NOT NULL,
+	CultureID nchar(6) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_ProductModelProductDescriptionCulture_ProductModelID_ProductDescriptionID_CultureID PRIMARY KEY (ProductModelID,ProductDescriptionID,CultureID)
+[cite_start]); [cite: 88]
+
+CREATE TABLE AdventureWorks2022_TRANS.Production.Product (
+	ProductID int IDENTITY(1,1) NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ProductNumber nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	MakeFlag Flag DEFAULT 1 NOT NULL,
+	FinishedGoodsFlag Flag DEFAULT 1 NOT NULL,
+	Color nvarchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SafetyStockLevel smallint NOT NULL,
+	ReorderPoint smallint NOT NULL,
+	StandardCost money NOT NULL,
+	ListPrice money NOT NULL,
+	[Size] nvarchar(5) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	SizeUnitMeasureCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	WeightUnitMeasureCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	Weight decimal(8,2) NULL,
+	DaysToManufacture int NOT NULL,
+	ProductLine nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	Class nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Style] nchar(2) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ProductSubcategoryID int NULL,
+	ProductModelID int NULL,
+	SellStartDate datetime NOT NULL,
+	SellEndDate datetime NULL,
+	DiscontinuedDate datetime NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_Product_ProductID PRIMARY KEY (ProductID)
+[cite_start]); [cite: 91, 92]
+
+--==================================================
+-- Esquema: Sales
+-- Tablas base para FactInternetSales y Dimensiones
+--==================================================
+CREATE SCHEMA Sales;
+GO
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.Currency (
+	CurrencyCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_Currency_CurrencyCode PRIMARY KEY (CurrencyCode)
+[cite_start]); [cite: 172]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.CurrencyRate (
+	CurrencyRateID int IDENTITY(1,1) NOT NULL,
+	CurrencyRateDate datetime NOT NULL,
+	FromCurrencyCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	ToCurrencyCode nchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	AverageRate money NOT NULL,
+	EndOfDayRate money NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_CurrencyRate_CurrencyRateID PRIMARY KEY (CurrencyRateID)
+[cite_start]); [cite: 179]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.SalesTerritory (
+	TerritoryID int IDENTITY(1,1) NOT NULL,
+	Name Name COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	CountryRegionCode nvarchar(3) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[Group] nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	SalesYTD money DEFAULT 0.00 NOT NULL,
+	SalesLastYear money DEFAULT 0.00 NOT NULL,
+	CostYTD money DEFAULT 0.00 NOT NULL,
+	CostLastYear money DEFAULT 0.00 NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_SalesTerritory_TerritoryID PRIMARY KEY (TerritoryID)
+[cite_start]); [cite: 209]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.Customer (
+	CustomerID int IDENTITY(1,1) NOT NULL,
+	PersonID int NULL,
+	StoreID int NULL,
+	TerritoryID int NULL,
+	AccountNumber AS (isnull('AW'+[dbo].[ufnLeadingZeros]([CustomerID]),'')) NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_Customer_CustomerID PRIMARY KEY (CustomerID)
+[cite_start]); [cite: 183]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.SpecialOffer (
+	SpecialOfferID int IDENTITY(1,1) NOT NULL,
+	Description nvarchar(255) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	DiscountPct smallmoney DEFAULT 0.00 NOT NULL,
+	[Type] nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	Category nvarchar(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	StartDate datetime NOT NULL,
+	EndDate datetime NOT NULL,
+	MinQty int DEFAULT 0 NOT NULL,
+	MaxQty int NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_SpecialOffer_SpecialOfferID PRIMARY KEY (SpecialOfferID)
+[cite_start]); [cite: 175]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.SpecialOfferProduct (
+	SpecialOfferID int NOT NULL,
+	ProductID int NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_SpecialOfferProduct_SpecialOfferID_ProductID PRIMARY KEY (SpecialOfferID,ProductID)
+[cite_start]); [cite: 217]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.SalesOrderHeader (
+	SalesOrderID int IDENTITY(1,1) NOT NULL,
+	RevisionNumber tinyint DEFAULT 0 NOT NULL,
+	OrderDate datetime DEFAULT getdate() NOT NULL,
+	DueDate datetime NOT NULL,
+	ShipDate datetime NULL,
+	Status tinyint DEFAULT 1 NOT NULL,
+	OnlineOrderFlag Flag DEFAULT 1 NOT NULL,
+	SalesOrderNumber AS (isnull(N'SO'+CONVERT([nvarchar](23),[SalesOrderID]),N'*** ERROR ***')) NOT NULL,
+	PurchaseOrderNumber OrderNumber COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	AccountNumber AccountNumber COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	CustomerID int NOT NULL,
+	SalesPersonID int NULL,
+	TerritoryID int NULL,
+	BillToAddressID int NOT NULL,
+	ShipToAddressID int NOT NULL,
+	ShipMethodID int NOT NULL,
+	CreditCardID int NULL,
+	CreditCardApprovalCode varchar(15) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	CurrencyRateID int NULL,
+	SubTotal money DEFAULT 0.00 NOT NULL,
+	TaxAmt money DEFAULT 0.00 NOT NULL,
+	Freight money DEFAULT 0.00 NOT NULL,
+	TotalDue AS (isnull(([SubTotal]+[TaxAmt])+[Freight],(0))) NOT NULL,
+	Comment nvarchar(128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_SalesOrderHeader_SalesOrderID PRIMARY KEY (SalesOrderID)
+[cite_start]); [cite: 191, 192]
+
+CREATE TABLE AdventureWorks2022_TRANS.Sales.SalesOrderDetail (
+	SalesOrderID int NOT NULL,
+	SalesOrderDetailID int IDENTITY(1,1) NOT NULL,
+	CarrierTrackingNumber nvarchar(25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	OrderQty smallint NOT NULL,
+	ProductID int NOT NULL,
+	SpecialOfferID int NOT NULL,
+	UnitPrice money NOT NULL,
+	UnitPriceDiscount money DEFAULT 0.0 NOT NULL,
+	LineTotal AS (isnull(([UnitPrice]*((1.0)-[UnitPriceDiscount]))*[OrderQty],(0.0))) NOT NULL,
+	rowguid uniqueidentifier DEFAULT newid() NOT NULL,
+	ModifiedDate datetime DEFAULT getdate() NOT NULL,
+	CONSTRAINT PK_SalesOrderDetail_SalesOrderID_SalesOrderDetailID PRIMARY KEY (SalesOrderID,SalesOrderDetailID)
+[cite_start]); [cite: 187]
