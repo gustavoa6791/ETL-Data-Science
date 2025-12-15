@@ -127,6 +127,34 @@ def extract_sales_sales_order_detail(engine):
     """Extrae datos de tabla Sales.SalesOrderDetail"""
     return _execute_query("SELECT * FROM Sales.SalesOrderDetail", "Sales.SalesOrderDetail", engine)
 
+def extract_sales_store(engine):
+    """Extrae datos de tabla Sales.Store"""
+    return _execute_query("SELECT * FROM Sales.Store", "Sales.Store", engine)
+
+#==================================================
+# Esquema: HumanResources
+#==================================================
+
+def extract_human_resources_employee(engine):
+    """Extrae datos de tabla HumanResources.Employee"""
+    query = """
+        SELECT 
+            BusinessEntityID, 
+            NationalIDNumber, 
+            LoginID, 
+            JobTitle, 
+            BirthDate, 
+            MaritalStatus, 
+            Gender, 
+            HireDate, 
+            SalariedFlag, 
+            VacationHours, 
+            SickLeaveHours, 
+            CurrentFlag 
+        FROM HumanResources.Employee
+    """
+    return _execute_query(query, "HumanResources.Employee", engine)
+
 def extract_data_with_query(query: str, engine):
     """Extrae datos de una base de datos usando una consulta SQL personalizada
     """

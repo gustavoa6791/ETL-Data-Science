@@ -9,7 +9,10 @@ from src.transform import (
     transform_promotion_data,
     transform_sales_territory_data,
     transform_currency_data,
-    transform_fact_internet_sales
+    transform_reseller_data,
+    transform_employee_data,
+    transform_fact_internet_sales,
+    transform_fact_reseller_sales
 )
 from src.extract import *
 
@@ -120,6 +123,33 @@ def etl_dim_currency(source_engine, dest_engine):
     print("--- Proceso de DimCurrency completado. ---")
 
 
+def etl_dim_reseller(source_engine, dest_engine):
+    """Ejecuta el ETL para la dimensión de Revendedor."""
+    print("\n--- Procesando DimReseller ---")
+    #extract
+    store_df = extract_sales_store(source_engine)
+    #transform
+    dim_reseller_df = transform_reseller_data(store_df)
+    #load
+    if dim_reseller_df is not None:
+        load_data(dim_reseller_df, 'DimReseller', dest_engine, if_exists='replace')
+    print("--- Proceso de DimReseller completado. ---")
+
+
+def etl_dim_employee(source_engine, dest_engine):
+    """Ejecuta el ETL para la dimensión de Empleado."""
+    print("\n--- Procesando DimEmployee ---")
+    #extract
+    employee_df = extract_human_resources_employee(source_engine)
+    person_df = extract_person_person(source_engine)
+    #transform
+    dim_employee_df = transform_employee_data(employee_df, person_df)
+    #load
+    if dim_employee_df is not None:
+        load_data(dim_employee_df, 'DimEmployee', dest_engine, if_exists='replace')
+    print("--- Proceso de DimEmployee completado. ---")
+
+
 def etl_fact_internet_sales(source_engine, dest_engine):
     """Ejecuta el ETL para la tabla de hechos de Ventas por Internet."""
     print("\n--- Procesando FactInternetSales ---")
@@ -140,8 +170,39 @@ def etl_fact_internet_sales(source_engine, dest_engine):
 
     # 4. Cargar
     if fact_table_df is not None:
-        load_data(fact_table_df, 'FactInternetSales', dest_engine, if_exists='replace') # Usar 'append' para las tablas de hechos
+        load_data(fact_table_df, 'FactInternetSales', dest_engine, if_exists='replace')
     print("--- Proceso de FactInternetSales completado. ---")
+
+
+def etl_fact_reseller_sales(source_engine, dest_engine):
+    """Ejecuta el ETL para la tabla de hechos de Ventas a Revendedores."""
+    print("\n--- Procesando FactResellerSales ---")
+    # 1. Extraer datos transaccionales y de origen necesarios
+    order_detail_df = extract_sales_sales_order_detail(source_engine)
+    order_header_df = extract_sales_sales_order_header(source_engine)
+    employee_source_df = extract_human_resources_employee(source_engine)
+    currency_rate_df = extract_sales_currency_rate(source_engine)
+    customer_df = extract_sales_customer(source_engine)
+
+    # 2. Extraer dimensiones necesarias desde la bodega de datos
+    dim_product = extract_data_with_query("SELECT ProductKey, ProductAlternateKey, ProductID_Origen FROM dbo.DimProduct", dest_engine)
+    dim_reseller = extract_data_with_query("SELECT ResellerKey, ResellerAlternateKey FROM dbo.DimReseller", dest_engine)
+    dim_employee = extract_data_with_query("SELECT EmployeeKey, EmployeeNationalIDAlternateKey FROM dbo.DimEmployee", dest_engine)
+    dim_date = extract_data_with_query("SELECT DateKey, FullDateAlternateKey FROM dbo.DimDate", dest_engine)
+    dim_promotion = extract_data_with_query("SELECT PromotionKey, PromotionAlternateKey FROM dbo.DimPromotion", dest_engine)
+    dim_territory = extract_data_with_query("SELECT SalesTerritoryKey, SalesTerritoryAlternateKey FROM dbo.DimSalesTerritory", dest_engine)
+    dim_currency = extract_data_with_query("SELECT CurrencyKey, CurrencyAlternateKey FROM dbo.DimCurrency", dest_engine)
+
+    # 3. Transformar
+    fact_table_df = transform_fact_reseller_sales(
+        order_detail_df, order_header_df, employee_source_df, currency_rate_df, customer_df, dim_product, dim_reseller, 
+        dim_employee, dim_date, dim_promotion, dim_territory, dim_currency
+    )
+
+    # 4. Cargar
+    if fact_table_df is not None:
+        load_data(fact_table_df, 'FactResellerSales', dest_engine, if_exists='replace')
+    print("--- Proceso de FactResellerSales completado. ---")
 
 
 def main():
@@ -153,7 +214,8 @@ def main():
         print("Error en la conexión a la base de datos.")
         return
     
-    #Crear tabla de dimensiones
+    # Cargar todas las dimensiones primero
+    print("\n*** Iniciando Carga de Dimensiones ***")
     etl_dim_date(dest_engine)
     etl_dim_product_category(source_engine, dest_engine)
     etl_dim_product_subcategory(source_engine, dest_engine)
@@ -162,9 +224,13 @@ def main():
     etl_dim_promotion(source_engine, dest_engine)
     etl_dim_sales_territory(source_engine, dest_engine)
     etl_dim_currency(source_engine, dest_engine)
+    etl_dim_reseller(source_engine, dest_engine) # Nueva
+    etl_dim_employee(source_engine, dest_engine) # Nueva
     
-    # Crear tabla de hechos
+    # Cargar las tablas de hechos después de las dimensiones
+    print("\n*** Iniciando Carga de Tablas de Hechos ***")
     etl_fact_internet_sales(source_engine, dest_engine)
+    etl_fact_reseller_sales(source_engine, dest_engine) # Nueva
 
     print("\n\n¡Proceso ETL completado exitosamente!")
 

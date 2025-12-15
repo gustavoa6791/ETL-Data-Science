@@ -262,6 +262,236 @@ def transform_currency_data(df):
     })
     return dim_df[['CurrencyKey', 'CurrencyAlternateKey', 'CurrencyName']]
 
+def transform_reseller_data(store_df):
+    """Transforma los datos de la tienda para DimReseller."""
+    print("Transformando datos de revendedores...")
+    if store_df is None:
+        return None
+    
+    # Renombrar columnas según el DDL de DimReseller
+    renamed_df = store_df.rename(columns={
+        'BusinessEntityID': 'ResellerAlternateKey',
+        'Name': 'ResellerName'
+    })
+    
+    # Añadir clave primaria subrogada
+    renamed_df.reset_index(inplace=True)
+    renamed_df = renamed_df.rename(columns={'index': 'ResellerKey'})
+    renamed_df['ResellerKey'] = renamed_df['ResellerKey'] + 1
+    
+    # Añadir columnas faltantes del DDL con valores por defecto
+    renamed_df['GeographyKey'] = None 
+    renamed_df['Phone'] = 'N/A'
+    renamed_df['BusinessType'] = 'Value Added Reseller' # Lógica de negocio de ejemplo
+    renamed_df['NumberEmployees'] = None
+    renamed_df['OrderFrequency'] = None
+    renamed_df['OrderMonth'] = None
+    renamed_df['FirstOrderYear'] = None
+    renamed_df['LastOrderYear'] = None
+    renamed_df['ProductLine'] = None
+    renamed_df['AddressLine1'] = 'N/A'
+    renamed_df['AddressLine2'] = None
+    renamed_df['AnnualSales'] = None
+    renamed_df['BankName'] = 'N/A'
+    renamed_df['MinPaymentType'] = None
+    renamed_df['MinPaymentAmount'] = None
+    renamed_df['AnnualRevenue'] = None
+    renamed_df['YearOpened'] = None
+
+    # Seleccionar y ordenar columnas para la tabla final
+    final_columns = [
+        'ResellerKey', 'GeographyKey', 'ResellerAlternateKey', 'Phone', 'BusinessType', 
+        'ResellerName', 'NumberEmployees', 'OrderFrequency', 'OrderMonth', 'FirstOrderYear', 
+        'LastOrderYear', 'ProductLine', 'AddressLine1', 'AddressLine2', 'AnnualSales', 
+        'BankName', 'MinPaymentType', 'MinPaymentAmount', 'AnnualRevenue', 'YearOpened'
+    ]
+    
+    return renamed_df[final_columns]
+
+def transform_employee_data(employee_df, person_df):
+    """Transforma los datos de empleado y persona para DimEmployee."""
+    print("Transformando datos de empleados...")
+    if employee_df is None or person_df is None:
+        return None
+
+    # Unir Employee con Person
+    merged_df = pd.merge(employee_df, person_df, on='BusinessEntityID', how='inner')
+
+    # Añadir clave primaria subrogada
+    merged_df.reset_index(inplace=True)
+    merged_df = merged_df.rename(columns={'index': 'EmployeeKey'})
+    merged_df['EmployeeKey'] = merged_df['EmployeeKey'] + 1
+
+    # Mapear y renombrar columnas
+    dim_employee = pd.DataFrame({
+        'EmployeeKey': merged_df['EmployeeKey'],
+        'ParentEmployeeKey': None,  # Lógica de jerarquía no implementada
+        'EmployeeNationalIDAlternateKey': merged_df['NationalIDNumber'],
+        'FirstName': merged_df['FirstName'],
+        'LastName': merged_df['LastName'],
+        'MiddleName': merged_df['MiddleName'],
+        'Title': merged_df['Title'],
+        'HireDate': merged_df['HireDate'],
+        'BirthDate': merged_df['BirthDate'],
+        'LoginID': merged_df['LoginID'],
+        'EmailAddress': merged_df['LoginID'].apply(lambda x: x.replace('adventure-works\\', '') + '@adventure-works.com'),
+        'Phone': None,
+        'MaritalStatus': merged_df['MaritalStatus'],
+        'SalariedFlag': merged_df['SalariedFlag'],
+        'Gender': merged_df['Gender'],
+        'PayFrequency': None,
+        'BaseRate': None,
+        'VacationHours': merged_df['VacationHours'],
+        'SickLeaveHours': merged_df['SickLeaveHours'],
+        'CurrentFlag': merged_df['CurrentFlag'],
+        'SalesPersonFlag': merged_df['JobTitle'].str.contains('Sales', case=False, na=False),
+        'DepartmentName': None, # Lógica de departamento no implementada
+        'StartDate': merged_df['HireDate'],
+        'EndDate': None,
+        'Status': 'Current'
+    })
+    
+    return dim_employee
+
+def transform_fact_reseller_sales(
+    order_detail_df, order_header_df, employee_source_df, currency_rate_df, customer_df, dim_product, dim_reseller, 
+    dim_employee, dim_date, dim_promotion, dim_territory, dim_currency
+):
+    """Construye la tabla FactResellerSales."""
+    print("Transformando datos para FactResellerSales...")
+
+    # 1. Filtrar solo para ventas a revendedores (OnlineOrderFlag = 0)
+    order_header_df = order_header_df[order_header_df['OnlineOrderFlag'] == 0].copy()
+
+    # Asegurarse de que solo se use la revisión más reciente de cada orden para evitar duplicados.
+    # Se ordena por RevisionNumber y se mantiene la primera aparición de cada SalesOrderID.
+    order_header_df = order_header_df.sort_values('RevisionNumber', ascending=False).drop_duplicates('SalesOrderID')
+
+    # Filtrar order_detail_df para incluir solo los SalesOrderID presentes en order_header_df
+    order_detail_df = order_detail_df[order_detail_df['SalesOrderID'].isin(order_header_df['SalesOrderID'])].copy()
+    
+    # Asegurar que no haya duplicados en los detalles del pedido
+    order_detail_df.drop_duplicates(subset=['SalesOrderID', 'SalesOrderDetailID'], inplace=True)
+
+    # Unir los datos de detalle y cabecera de pedido
+    facts_df = pd.merge(order_detail_df, order_header_df, on='SalesOrderID', how='inner')
+    print(f"Número de filas tras unión inicial: {len(facts_df)}")
+    
+    # Las claves de las dimensiones se buscarán en los siguientes pasos.
+    # El cambio de nombre prematuro de las columnas de claves naturales causó errores.
+
+    # 3. Buscar claves de dimensión
+    # Producto
+    # Asegurarse de que la tabla de búsqueda de productos sea única por la clave de unión.
+    product_lookup = dim_product[['ProductKey', 'ProductID_Origen']].drop_duplicates(subset=['ProductID_Origen'])
+    facts_df = pd.merge(facts_df, product_lookup, left_on='ProductID', right_on='ProductID_Origen', how='left')
+    
+    # Reseller (lógica de unión simplificada y corregida)
+    # Para ventas a revendedores, el CustomerID en SalesOrderHeader corresponde al BusinessEntityID del revendedor.
+    # ResellerAlternateKey en DimReseller se basa en BusinessEntityID.
+    dim_reseller['ResellerAlternateKey'] = dim_reseller['ResellerAlternateKey'].astype('Int64')
+    facts_df = pd.merge(facts_df, dim_reseller[['ResellerKey', 'ResellerAlternateKey']], left_on='CustomerID', right_on='ResellerAlternateKey', how='left')
+    
+    # Employee (usando SalesPersonID)
+    # Crear un mapa de búsqueda para vincular BusinessEntityID (SalesPersonID) con EmployeeKey
+    # Filtrar la fuente de empleados para usar solo el registro actual (CurrentFlag = 1)
+    # para evitar duplicados si un empleado tiene múltiples registros históricos.
+    current_employees_df = employee_source_df[employee_source_df['CurrentFlag'] == 1]
+
+    employee_lookup = pd.merge(
+        dim_employee,
+        current_employees_df[['BusinessEntityID', 'NationalIDNumber']],
+        left_on='EmployeeNationalIDAlternateKey',
+        right_on='NationalIDNumber',
+        how='inner'
+    )
+    # Eliminar duplicados en la tabla de búsqueda de empleados. Esto es crucial si DimEmployee
+    # pudiera tener múltiples entradas para un mismo empleado. Nos quedamos con la primera.
+    employee_lookup.drop_duplicates(subset=['BusinessEntityID'], keep='first', inplace=True)
+
+    # Asegurar compatibilidad de tipos antes de unir
+    facts_df['SalesPersonID'] = facts_df['SalesPersonID'].astype('Int64')
+    employee_lookup['BusinessEntityID'] = employee_lookup['BusinessEntityID'].astype('Int64')
+    # Unir usando las claves correctas
+    facts_df = pd.merge(
+        facts_df,
+        employee_lookup[['EmployeeKey', 'BusinessEntityID']],
+        left_on='SalesPersonID',
+        right_on='BusinessEntityID',
+        how='left'
+    )
+
+    # Promotion
+    facts_df = pd.merge(facts_df, dim_promotion[['PromotionKey', 'PromotionAlternateKey']], left_on='SpecialOfferID', right_on='PromotionAlternateKey', how='left')
+    # Territory
+    facts_df = pd.merge(facts_df, dim_territory[['SalesTerritoryKey', 'SalesTerritoryAlternateKey']], left_on='TerritoryID', right_on='SalesTerritoryAlternateKey', how='left')
+    
+    # Currency
+    # 1. Obtener el código de moneda (ej. 'USD') desde la tabla de tipos de cambio
+    facts_df = pd.merge(facts_df, currency_rate_df[['CurrencyRateID', 'ToCurrencyCode']], on='CurrencyRateID', how='left')
+    # 2. Unir con la dimensión de moneda usando el código
+    facts_df['ToCurrencyCode'] = facts_df['ToCurrencyCode'].str.strip()
+    dim_currency['CurrencyAlternateKey'] = dim_currency['CurrencyAlternateKey'].str.strip()
+    facts_df = pd.merge(facts_df, dim_currency[['CurrencyKey', 'CurrencyAlternateKey']], left_on='ToCurrencyCode', right_on='CurrencyAlternateKey', how='left')
+
+    # Claves de fecha
+    dim_date_keys = dim_date[['DateKey', 'FullDateAlternateKey']]
+    facts_df['OrderDate_Date'] = facts_df['OrderDate'].dt.normalize()
+    facts_df['DueDate_Date'] = facts_df['DueDate'].dt.normalize()
+    facts_df['ShipDate_Date'] = facts_df['ShipDate'].dt.normalize()
+
+    facts_df = pd.merge(facts_df, dim_date_keys.rename(columns={'DateKey': 'OrderDateKey'}), left_on='OrderDate_Date', right_on='FullDateAlternateKey', how='left')
+    facts_df = pd.merge(facts_df, dim_date_keys.rename(columns={'DateKey': 'DueDateKey'}), left_on='DueDate_Date', right_on='FullDateAlternateKey', how='left')
+    facts_df = pd.merge(facts_df, dim_date_keys.rename(columns={'DateKey': 'ShipDateKey'}), left_on='ShipDate_Date', right_on='FullDateAlternateKey', how='left')
+
+    # 4. Renombrar y seleccionar columnas finales
+    facts_df = facts_df.rename(columns={
+        'SalesOrderLineNumber': 'SalesOrderLineNumber',
+        'RevisionNumber': 'RevisionNumber',
+        'OrderQty': 'OrderQuantity',
+        'UnitPrice': 'UnitPrice',
+        'LineTotal': 'ExtendedAmount',
+        'UnitPriceDiscount': 'UnitPriceDiscountPct',
+        'TaxAmt': 'TaxAmt',
+        'Freight': 'Freight',
+        'CarrierTrackingNumber': 'CarrierTrackingNumber',
+        'PurchaseOrderNumber': 'CustomerPONumber'
+    })
+
+    facts_df['DiscountAmount'] = facts_df['ExtendedAmount'] * facts_df['UnitPriceDiscountPct']
+    facts_df['ProductStandardCost'] = 0  # Placeholder
+    facts_df['TotalProductCost'] = 0  # Placeholder
+    facts_df['SalesAmount'] = facts_df['ExtendedAmount']
+
+    # Eliminar filas donde las claves foráneas son nulas
+    key_cols = [
+        'ProductKey', 'OrderDateKey', 'DueDateKey', 'ShipDateKey', 
+        'ResellerKey', 'EmployeeKey', 'PromotionKey', 'CurrencyKey', 'SalesTerritoryKey'
+    ]
+    
+    print(f"Número de filas antes de la limpieza de claves: {len(facts_df)}")
+
+    # Llenar claves foráneas nulas con un valor por defecto (ej. -1 para 'Miembro Desconocido')
+    # y convertir a un tipo entero. Esto evita descartar filas de hechos si una dimensión no coincide.
+    for col in key_cols:
+        facts_df[col] = facts_df[col].fillna(-1).astype(int)
+
+    print(f"Número de filas después de la limpieza de claves: {len(facts_df)}")
+
+    final_columns = [
+        'ProductKey', 'OrderDateKey', 'DueDateKey', 'ShipDateKey', 'ResellerKey', 'EmployeeKey', 'PromotionKey', 'CurrencyKey', 'SalesTerritoryKey',
+        'SalesOrderNumber', 'SalesOrderLineNumber', 'RevisionNumber', 'OrderQuantity', 'UnitPrice', 'ExtendedAmount',
+        'UnitPriceDiscountPct', 'DiscountAmount', 'ProductStandardCost', 'TotalProductCost', 'SalesAmount', 'TaxAmt', 'Freight',
+        'CarrierTrackingNumber', 'CustomerPONumber', 'OrderDate', 'DueDate', 'ShipDate'
+    ]
+    
+    # Asegurarse de que todas las columnas existan
+    for col in final_columns:
+        if col not in facts_df.columns:
+            facts_df[col] = None
+
+    return facts_df[final_columns]
+
 def transform_fact_internet_sales(order_detail_df, order_header_df, dim_product, dim_customer, dim_date, dim_promotion, dim_territory, dim_currency):
     """Construye la tabla FactInternetSales combinando orígenes con dimensiones."""
     print("Transformando datos para FactInternetSales...")
